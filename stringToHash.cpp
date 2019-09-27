@@ -42,7 +42,6 @@ string stringToHash(string input, int hashSize) {
 
     while (os.str().size() < hashSize) {
         int number = sum ^ (sum / hashSize * (os.str().size()+1));
-        cout << sum << " " << number << endl;
         os << number;
     }
 
