@@ -6,17 +6,24 @@
 #include <chrono>
 #include <time.h>       /* time */
 #include <bitset>
+
 using namespace std;
 
 void generateTestFiles();
-bool isValidAsci(int);
+
 int getAsciNumber(int, int);
-string stringToHash(string, int = 24);
+
+string stringToHash(const string &input, int hashSize = 64);
+
 void readFromFilesAndTest();
+
 string getFileString(ifstream &stream);
+
 void displayHashedStringFromFile(ifstream &stream);
 
-int validAsciCodes[] {48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 103, 104, 106, 107, 108};
+unsigned long stringToNumberHash(const std::string &str);
+
+int validAsciCodes[]{48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 97, 98, 99, 100, 101, 102, 103, 104, 106, 107, 108};
 
 class StringPair {
 private:
@@ -25,45 +32,45 @@ private:
         ostringstream str2Stream;
         for (int i = 0; i < 5; i++) {
 
-            char letterStr1 = 'a' + rand()%26; // Get random letter
+            char letterStr1 = 'a' + rand() % 26; // Get random letter
 
             str1Stream << letterStr1;
 
         }
 
-            str1 = str1Stream.str();
-            str2 = str1;
+        str1 = str1Stream.str();
+        str2 = str1;
 
-            str2[0] =  'a' + rand()%26;
+        str2[0] = 'a' + rand() % 26;
     }
 
     void generatePair() {
-         ostringstream str1Stream;
-         ostringstream str2Stream;
+        ostringstream str1Stream;
+        ostringstream str2Stream;
         for (int i = 0; i < 5; i++) {
 
-            char letterStr1 = 'a' + rand()%26; // Get random letter
-            char letterStr2 = 'a' + rand()%26; // Get random letter
+            char letterStr1 = 'a' + rand() % 26; // Get random letter
+            char letterStr2 = 'a' + rand() % 26; // Get random letter
 
             str1Stream << letterStr1;
             str2Stream << letterStr2;
         }
 
-            str1 = str1Stream.str();
-            str2 = str2Stream.str();
+        str1 = str1Stream.str();
+        str2 = str2Stream.str();
     }
 
-    string stringToBin(const std::string & a){
-    string binaryString;
+    string stringToBin(const std::string &a) {
+        string binaryString;
 
-    for (char _char : a) {
-        binaryString +=std::bitset<8>(_char).to_string();
+        for (char _char : a) {
+            binaryString += std::bitset<8>(_char).to_string();
+        }
+        return binaryString;
     }
-    return binaryString;
-}
 
 public:
-    string str1 ="";
+    string str1 = "";
     string str2 = "";
 
 
@@ -76,7 +83,7 @@ public:
             if (similar) {
                 generateSimilarPair();
             } else {
-              generatePair();
+                generatePair();
             }
 
         }
@@ -84,22 +91,20 @@ public:
         hashPair();
 
 
-
     }
 
 
+    double bitComparePercentage() {
+        double ratio = 0;
+        std::string aBin = stringToBin(hashedStr1);
+        std::string bBin = stringToBin(hashedStr2);
+        for (int i = 0; i < aBin.length(); i++) {
+            if (aBin[i] != bBin[i])
+                ratio++;
+        }
+        return ratio / aBin.length() * 100;
 
-    double bitComparePercentage(){
-    double ratio=0;
-    std::string aBin=stringToBin(hashedStr1);
-    std::string bBin=stringToBin(hashedStr2);
-    for(int i=0;i<aBin.length();i++){
-        if(aBin[i]!=bBin[i])
-            ratio++;
     }
-    return ratio/aBin.length() * 100;
-
-   }
 
     bool areEqual() {
         return hashedStr1 == hashedStr2;
@@ -115,7 +120,6 @@ public:
     }
 
 };
-
 
 class Timer {
 private:
@@ -134,9 +138,13 @@ public:
 };
 
 
-int main(int argc,char* argv[])
+long map(long x, long in_min, long in_max, long out_min, long out_max) {
+    return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
+}
 
-{
+int main(int argc, char *argv[]) {
+    // cout << stringToHash("Lietuva") << endl << stringToHash("lietuva") << endl << stringToHash("lietuvą");
+    //return 0;
     srand(time(NULL));
     generateTestFiles();
     readFromFilesAndTest();
@@ -144,38 +152,35 @@ int main(int argc,char* argv[])
     return 0;
 }
 
-string stringToHash(string input, int hashSize) {
+unsigned long stringToNumberHash(const std::string &str) {
+    unsigned int b = 378551;
+    unsigned int a = 63689;
+    unsigned long hash = 0;
 
-    if (input.size() == 0) {
-        throw "Input'as tuscias";
+    for (std::size_t i = 0; i < str.length(); i++) {
+        hash = hash * a + str[i];
+        a = a * b;
     }
-    long int sum = (char)input[0];
+    return hash;
+}
 
-    int index = 0;
-    for (auto c : input)
-    {
-        int code = (int)c;
-        int processedCode = code + (index ^ (code * 2));
-        sum = abs(processedCode + sum);
-        index += 1;
-    }
+string stringToHash(const string &input, int hashSize) {
+    unsigned long long intHash = stringToNumberHash(input);
 
-    ostringstream os;
-    string numbers= "";
+    string numbersString = to_string(intHash);
 
-
-    while (os.str().size() < hashSize) {
-        int number = sum ^ (sum / hashSize * (os.str().size()+1));
-        os << number;
+    while (numbersString.size() <= hashSize) {
+        intHash += (numbersString.size() * intHash);
+        numbersString += to_string(intHash);
     }
 
-    string numbersString = os.str();
+    numbersString = numbersString.substr(0, hashSize); // limit the size of the string
 
     ostringstream oss;
 
     int lastNumber = 0;
 
-    for (auto number : numbersString){
+    for (auto number : numbersString) {
         int val = number - '0';
         oss << char(getAsciNumber(val, lastNumber));
 
@@ -186,67 +191,53 @@ string stringToHash(string input, int hashSize) {
 }
 
 int getAsciNumber(int number, int lastNumber) {
-
-
-     return validAsciCodes[number+lastNumber];
+    return validAsciCodes[number + lastNumber];
 }
+
 void generateTestFiles() {
 
     int fileIndex = 1;
-    char letter = 'a' + rand()%26; // Get random letter
 
-    for(int i = 1; i <= 2; i++) {
-        ofstream oneLetterFile("oneLetterFile-" + to_string(i) + ".txt" );
+    for (int i = 1; i <= 2; i++) {
+        ofstream oneLetterFile("oneLetterFile-" + to_string(i) + ".txt");
         fileIndex++;
 
-        char letter = 'a' + rand()%26; // Get random letter
-        for(int i = 0; i <= 10000; i++) {
+        char letter = 'a' + rand() % 26; // Get random letter
+        for (int i = 0; i <= 10000; i++) {
 
             oneLetterFile << letter;
         }
 
-
-        ofstream differentLettersFile("differentLettersFile-" + to_string(i) + ".txt" );
+        ofstream differentLettersFile("differentLettersFile-" + to_string(i) + ".txt");
         fileIndex++;
 
-        for(int i = 0; i <= 10000; i++) {
-            char letter = 'a' + rand()%26; // Get random letter
+        for (int i = 0; i <= 10000; i++) {
+            char letter = 'a' + rand() % 26; // Get random letter
             differentLettersFile << letter;
         }
-
     }
-
 
     ofstream firstSimilarFile("firstSimilarFile.txt");
     ofstream secondSimilarFile("secondSimilarFile.txt");
 
-    for(int i = 0; i <= 10000; i++) {
-            char letter = 'a' + rand()%26; // Get random letter
-            firstSimilarFile<< letter;
-            if (i == 1000) {
-                secondSimilarFile << 1;
-            }
-            else {
-                secondSimilarFile << letter;
-            }
-
+    for (int i = 0; i <= 10000; i++) {
+        char letter = 'a' + rand() % 26; // Get random letter
+        firstSimilarFile << letter;
+        if (i == 1000) {
+            secondSimilarFile << 1;
+        } else {
+            secondSimilarFile << letter;
         }
-
-
+    }
 
     ofstream emptyFile("emptyFile.txt");
     emptyFile << " ";
-
-
-
-
 }
 
 string getFileString(ifstream &stream) {
     string sLine;
 
-    while (!stream.eof())
-    {
+    while (!stream.eof()) {
         stream >> sLine;
     }
 
@@ -259,18 +250,13 @@ void displayHashedStringFromFile(ifstream &stream) {
 
 void readFromFilesAndTest() {
 
- for(int i = 1; i <= 2; i++) {
-    ifstream oneLetterFile("oneLetterFile-" + to_string(i) + ".txt" );
-    displayHashedStringFromFile(oneLetterFile);
+    for (int i = 1; i <= 2; i++) {
+        ifstream oneLetterFile("oneLetterFile-" + to_string(i) + ".txt");
+        displayHashedStringFromFile(oneLetterFile);
 
-
-
-    ifstream differentLettersFile("differentLettersFile-" + to_string(i) + ".txt" );
-    displayHashedStringFromFile(differentLettersFile);
-
-
-
- }
+        ifstream differentLettersFile("differentLettersFile-" + to_string(i) + ".txt");
+        displayHashedStringFromFile(differentLettersFile);
+    }
 
     ifstream firstSimilarFile("firstSimilarFile.txt");
     displayHashedStringFromFile(firstSimilarFile);
@@ -278,44 +264,38 @@ void readFromFilesAndTest() {
     ifstream secondSimilarFile("secondSimilarFile.txt");
     displayHashedStringFromFile(secondSimilarFile);
 
+    ifstream constitutionFile("konstitucija.txt");
 
+    Timer timer;
 
-     ifstream constitutionFile("konstitucija.txt");
+    double hashTime = 0;
 
-     Timer timer;
-
-     double hashTime = 0;
-
-     for( std::string strToHash; getline( constitutionFile, strToHash ); ) {
-
-
+    for (std::string strToHash; getline(constitutionFile, strToHash);) {
         timer.reset();
 
         string stringHash = stringToHash(strToHash);
 
-
         hashTime += timer.elapsed();
-     }
+    }
 
-     cout << "Failo konstitucija.txt eiluciu hashavimo laikas: " + to_string(hashTime) << endl << endl;
+    cout << "Failo konstitucija.txt eiluciu hashavimo laikas: " + to_string(hashTime) << endl << endl;
 
-
-     int repeats = 0;
-     for (int i = 0; i < 1000000; i++) {
+    int repeats = 0;
+    for (int i = 0; i < 1000000; i++) {
         StringPair strPair;
 
         if (strPair.areEqual()) {
             repeats++;
         }
 
-     }
+    }
 
-     cout << "Rasta " << repeats << " pasikartojimu" << endl;
+    cout << "Rasta " << repeats << " pasikartojimu" << endl;
 
-      double sum = 0;
-      double maxPerc = -100000;
-      double minPerc = 100000;
-      for (int i = 0; i < 100000; i++) {
+    double sum = 0;
+    double maxPerc = -100000;
+    double minPerc = 100000;
+    for (int i = 0; i < 100000; i++) {
         StringPair strPair(true);
         double perc = strPair.bitComparePercentage();
 
@@ -323,18 +303,14 @@ void readFromFilesAndTest() {
             maxPerc = perc;
         }
 
-        if (perc < minPerc)  {
+        if (perc < minPerc) {
             minPerc = perc;
         }
 
         sum += perc;
-     }
+    }
 
-
-     cout << "Vidutinis panasumo procentas: " << sum/100000 << "%" << endl;
-      cout << "Min panasumo procentas: " << minPerc << "%" <<  endl;
-     cout << "Max panasumo procentas: " << maxPerc << "%" << endl;
-
-
-
+    cout << "Vidutinis panasumo procentas: " << sum / 100000 << "%" << endl;
+    cout << "Min panasumo procentas: " << minPerc << "%" << endl;
+    cout << "Max panasumo procentas: " << maxPerc << "%" << endl;
 }
