@@ -10,7 +10,6 @@ Not-so-smart hashing algorithm for the Blockchain class.
  
 # Improvements to make
 
-- Beggining of the hash is not random enough, need to find a more optimised solution
 - Only 20 hard-coded ASCII characters supported for the hash, increase this amount
 
 # How to run?
